@@ -14,6 +14,8 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import quicktime.util.EncodedImage;
+
 public class ProcessImg {
 
 	// Control parameters
@@ -21,7 +23,7 @@ public class ProcessImg {
 	static int MBHalfSize = MBSize / 2; // half of macro block
 	
 	// Data
-	protected ColorChannel<Double[][]> refImage;
+	protected ColorRGBChannel<Double[][]> refImage;
 	
 	// Debugging
 	static boolean enableLog = true;
@@ -32,10 +34,12 @@ public class ProcessImg {
 			for (File srcImgFile : files) {
 				LogMsg(String.format("Processing %s....",srcImgFile.toString()));
 				
-				ColorChannel<Double[][]> srcImage = ImgProcessing.extractColors(ImageIO.read(srcImgFile));
+				ColorRGBChannel<Double[][]> srcImage = ImgProcessing.extractColors(ImageIO.read(srcImgFile));
 				Feature encodeImage = doFeatureExtract(srcImage);
 				
-				LogMsg(String.format("Compressed %s. Done.",srcImgFile.toString()));
+				LogMsg(String.format("Feature extraction %s. Done.",srcImgFile.toString()));
+				
+				encodeImage.printFeatures(System.out);
 			}
 		}
 		catch(IOException ex) {
@@ -44,9 +48,9 @@ public class ProcessImg {
 		}
 	}
 	
-	static Feature doFeatureExtract(ColorChannel<Double[][]> srcImage)
+	static Feature doFeatureExtract(ColorRGBChannel<Double[][]> srcImage)
 	{
-		return new Feature(srcImage);
+		return new FeatureMeanColor(srcImage);
 	}
 	
 	///////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,11 +71,13 @@ public class ProcessImg {
 			// We will run motion estimation on the same image
 			String filename = "box1.png";
 			LogMsg("Load Reference Image: " + Conf.TEST_DATA_PATH + filename + " ...");			
-			ColorChannel<Double[][]> refImage = ImgProcessing.extractColors(
+			ColorRGBChannel<Double[][]> refImage = ImgProcessing.extractColors(
 					ImageIO.read(new File(Conf.TEST_DATA_PATH + filename)));
 
 			Feature encodeImage = doFeatureExtract(refImage);
-			LogMsg("Done Feature Extraction.");		 
+			LogMsg("Done Feature Extraction.");
+			
+			encodeImage.printFeatures(System.out);
 		}
 		catch(IOException ex) {
 			System.err.println("Failed to load the reference image. " +

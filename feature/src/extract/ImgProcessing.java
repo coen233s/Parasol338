@@ -35,7 +35,7 @@ public class ImgProcessing {
 	static final double a32 = -0.419;
 	static final double a33 = -0.081;
 	
-	public static ColorChannel<Double[][]> extractColors(BufferedImage img) {
+	public static ColorRGBChannel<Double[][]> extractColors(BufferedImage img) {
 		Double[][] Y = new Double[img.getWidth()][img.getHeight()];
 		Double[][] Cb = new Double[img.getWidth()][img.getHeight()];
 		Double[][] Cr = new Double[img.getWidth()][img.getHeight()];
@@ -43,15 +43,21 @@ public class ImgProcessing {
 		for (int x=0; x<img.getWidth(); x++) {
 			for (int y=0; y<img.getHeight(); y++) {
 				Color c = new Color(img.getRGB(x, y));
-				Y[x][y] = (double) c.getRed() * a11 + (double) c.getGreen() * a12 + (double) c.getBlue() * a13;
-				Cb[x][y] = (double) c.getRed() * a21 + (double) c.getGreen() * a22 + (double) c.getBlue() * a23;
-				Cr[x][y] = (double) c.getRed() * a31 + (double) c.getGreen() * a32 + (double) c.getBlue() * a33;
+				
+//				Y[x][y] = (double) c.getRed() * a11 + (double) c.getGreen() * a12 + (double) c.getBlue() * a13;
+//				Cb[x][y] = (double) c.getRed() * a21 + (double) c.getGreen() * a22 + (double) c.getBlue() * a23;
+//				Cr[x][y] = (double) c.getRed() * a31 + (double) c.getGreen() * a32 + (double) c.getBlue() * a33;
+
+				Y[x][y] = (double) c.getRed();
+				Cb[x][y] = (double) c.getGreen();
+				Cr[x][y] = (double) c.getBlue();				
+				
 				assert(Y[x][y] >= 0.0 && Y[x][y] <= 255.0);
 				assert(Cb[x][y] >= 0.0 && Cb[x][y] <= 255.0);
 				assert(Cr[x][y] >= 0.0 && Cr[x][y] <= 255.0);
 			}
 		}
-		return new ColorChannel<Double[][]>(Y,Cb,Cr);
+		return new ColorRGBChannel<Double[][]>(Y,Cb,Cr);
 	}
 	
 	// YCbCr -> RGB matrix
@@ -65,16 +71,16 @@ public class ImgProcessing {
 	static final double b32 = Double.parseDouble("1.7722");  
 	static final double b33 = Double.parseDouble("9.9022E-4");  
 	
-	public static Color[][] fromYCbCy2RGB(ColorChannel<Double[][]> srcImg) {
-		int width = srcImg.y.length;
-		int height = srcImg.y[0].length;
+	public static Color[][] fromYCbCy2RGB(ColorRGBChannel<Double[][]> srcImg) {
+		int width = srcImg.r.length;
+		int height = srcImg.r[0].length;
 		Color[][] dstImg = new Color[width][height];
 		
 		for (int x=0; x<width; x++) {
 			for (int y=0; y<height; y++) {
-				int r = (int) Math.round(srcImg.y[x][y] + srcImg.cb[x][y] * b12 + srcImg.cr[x][y] * b13);
-				int g = (int) Math.round(srcImg.y[x][y] + srcImg.cb[x][y] * b22 + srcImg.cr[x][y] * b23);
-				int b = (int) Math.round(srcImg.y[x][y] + srcImg.cb[x][y] * b32 + srcImg.cr[x][y] * b33);
+				int r = (int) Math.round(srcImg.r[x][y] + srcImg.g[x][y] * b12 + srcImg.b[x][y] * b13);
+				int g = (int) Math.round(srcImg.r[x][y] + srcImg.g[x][y] * b22 + srcImg.b[x][y] * b23);
+				int b = (int) Math.round(srcImg.r[x][y] + srcImg.g[x][y] * b32 + srcImg.b[x][y] * b33);
 				dstImg[x][y] = new Color(r,g,b);
 			}
 		}
@@ -94,47 +100,5 @@ public class ImgProcessing {
 				src.setRGB(x, y, colors[x][y].getRGB());
 			}
 		}
-	}
-	
-	///////////////////////////////////////////////////////////////////////////////////////////////
-	// Unit Test
-	///////////////////////////////////////////////////////////////////////////////////////////////
-	
-	public static void selfTest() {
-		test_extractColors();
-	}
-	
-	static void test_extractColors() {
-		System.out.println("Test ImgProcessing.extractColors() ...");
-		
-		ColorChannel<Double[][]> srcImage = null;
-		Color[][] dstImage = null;
-		try {
-			String filename = "Lenna.png";
-			BufferedImage img = ImageIO.read(new File(Conf.TEST_DATA_PATH + filename));
-			srcImage = ImgProcessing.extractColors(img);
-			dstImage = ImgProcessing.fromYCbCy2RGB(srcImage);
-			
-			System.out.println("\tTest : Compared pixel by pixel value...");
-			assert(dstImage.length == img.getWidth());
-			assert(dstImage[0].length == img.getHeight());
-			for (int x=0; x<img.getWidth(); x++) {
-				for (int y=0; y<img.getHeight(); y++) {
-					assert(dstImage[x][y].getRGB() == img.getRGB(x, y));
-				}
-			}
-			System.out.println("\tPassed.");
-			//BufferedImage outImg = new BufferedImage(img.getWidth(),img.getHeight(), BufferedImage.TYPE_INT_RGB);
-			//updateBufferedImage(outImg,dstImage);
-		    //ImageIO.write(outImg, "png", new File(Conf.TEST_DATA_PATH + "test_" + filename));	
-		}
-		catch(IOException e) {
-			System.err.println("Failed to load the reference image.");
-		}
-		System.out.println("Done.");
-	}
-	
-	public static void main(String[] args) {
-		selfTest();
-	}
+	}	
 }

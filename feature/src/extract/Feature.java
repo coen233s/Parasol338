@@ -1,9 +1,34 @@
 package extract;
 
+import java.io.PrintStream;
+import java.util.Vector;
+
+/*
+ * Feature extraction
+ * 
+ * Input:
+ *    N x M mage
+ *    
+ * Output:
+ *    a vector of feature values
+ *    
+ * Features:
+ *    vector of Floats/Doubles
+ */
+
 public class Feature {
-	protected ColorChannel<Double[][]> m_image;
+	protected ColorRGBChannel<Double[][]> m_image;
+	protected Vector<Double> featureVec;	
 	
-	public Feature(	ColorChannel<Double[][]> image) {		
+	public Feature(ColorRGBChannel<Double[][]> image) {		
 		this.m_image = image;
-	}	
+	}
+	
+	public void printFeatures(PrintStream ps) {
+		for (Double dval : featureVec) {
+			ps.print(dval);
+			ps.print("\t");
+		}
+		ps.println();
+	}
 }

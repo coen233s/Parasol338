@@ -196,7 +196,7 @@ public class Cluster {
 		for (int k=0; k<centroids.length; k++) {
 			centroids[k] = avgData[k];
 		}
-	}	
+	}
 
 	public boolean cluster(PrintStream out, int iterLim, double dataMin, double dataMax) {
 		Integer[] groups = new Integer[m_nSample];
@@ -209,7 +209,7 @@ public class Cluster {
 		for (int i = 0; i < iterLim; i++) {
 			updateGroupAssignment(groups, centroids, m_feature);
 			updateCentroids(groups, centroids, m_feature);
-			System.out.println("iteration: " + i);
+			System.err.println("iteration: " + i);
 		}
 		
 		// print labels

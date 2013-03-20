@@ -20,8 +20,8 @@ public class FeatureMeanColor extends Feature {
 		int blockCx = imgCx / m_cx;
 		int blockCy = imgCy / m_cy;
 		
-		for (int i = 0; i < m_cx; i++) {
-		    for (int j = 0; j < m_cy; j++) {
+		for (int i = 0; i < m_cx - 1; i++) {
+		    for (int j = 0; j < m_cy - 1; j++) {
 				int startBlockCx = blockCx * i;
 				int startBlockCy = blockCy * j;
 				

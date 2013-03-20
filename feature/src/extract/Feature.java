@@ -18,10 +18,11 @@ import java.util.Vector;
 
 public class Feature {
 	protected ColorRGBChannel<Double[][]> m_image;
-	protected Vector<Double> featureVec;	
+	protected Vector<Double> featureVec;
 	
 	public Feature(ColorRGBChannel<Double[][]> image) {		
 		this.m_image = image;
+		featureVec = new Vector<Double>();
 	}
 	
 	public void printFeatures(PrintStream ps) {

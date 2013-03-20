@@ -5,6 +5,9 @@ java -classpath feature/bin extract.ProcessImg -ofeature.txt $IMG_DIR
 echo Run k-mean on extract features
 java -classpath cluster/bin Parasol.Cluster feature.txt | tee cluster.txt
 
+echo Removing old files/
+rm -rf files/
+
 echo Clustering image files
 cluster_field=0
 for ln in `cat cluster.txt`

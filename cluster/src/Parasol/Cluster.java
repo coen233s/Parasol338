@@ -41,7 +41,7 @@ public class Cluster {
 	protected double m_dataMin;
 	protected double m_dataMax;
 	
-	public static final int NUM_CENTROIDS = 5;	
+	public static final int NUM_CENTROIDS = 10;
 
 	public static void printHelp() {
 		System.out.println("Usage: " + "java Cluster.class" + " [-t] [-h] <inputfile>");

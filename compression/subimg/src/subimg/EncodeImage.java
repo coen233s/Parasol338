@@ -25,7 +25,7 @@ public class EncodeImage {
 			this.MBHalfSize = mb / 2;
 		}
 	}
-		
+
 	ArrayList<MotionVect> mvs;
 	ColorChannel<ArrayList<Double[][]>> residues;
 	HeaderParams params;

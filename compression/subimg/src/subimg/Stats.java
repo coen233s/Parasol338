@@ -1,12 +1,8 @@
 package subimg;
 
-import java.io.BufferedWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.OutputStreamWriter;
 import java.util.LinkedList;
 
 public class Stats {
@@ -24,15 +20,14 @@ public class Stats {
 		return (double)(sum)/((double)MBSize*(double)MBSize);
 	}
 	
-	final static Charset ENCODING = StandardCharsets.UTF_8;
+	final static String ENCODING = "UTF-8";
 	
 	public static void writeLargerTextFile(String aFileName, LinkedList<String> aLines) throws IOException {
-		Path path = Paths.get(aFileName);
-		try (BufferedWriter writer = Files.newBufferedWriter(path, ENCODING)){
-			for(String line : aLines){
-				writer.write(line);
-		        writer.newLine();
-			}
-		}
+	    OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(aFileName),
+	            ENCODING);
+	    for(String line : aLines){
+	        writer.write(line);
+	        writer.write("\n");
+	    }
 	}
 }

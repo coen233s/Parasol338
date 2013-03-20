@@ -5,8 +5,8 @@ package extract;
  */
 
 public class FeatureMeanColor extends Feature {
-	public static final int m_cx = 20; 
-	public static final int m_cy = 20;
+	public static final int m_cx = 40; 
+	public static final int m_cy = 40;
 	
 	static public int getFeatureNumber() {
 		return m_cx * m_cy * 3;
@@ -15,7 +15,7 @@ public class FeatureMeanColor extends Feature {
 	public FeatureMeanColor(ColorRGBChannel<Double[][]> image) {
 		super(image);
 		process();
-	}	
+	}
 	
 	public void process() {
 		int imgCx = m_image.at(0).length;

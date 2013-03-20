@@ -1,4 +1,4 @@
-IMG_DIR=compression/subimg/test_data
+IMG_DIR=images_cluster
 echo Extracting features from images in $IMG_DIR
 java -classpath feature/bin extract.ProcessImg -ofeature.txt $IMG_DIR
 

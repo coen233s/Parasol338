@@ -1,5 +1,7 @@
 package extract;
 
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.util.Vector;
 
@@ -25,11 +27,15 @@ public class Feature {
 		featureVec = new Vector<Double>();
 	}
 	
-	public void printFeatures(PrintStream ps) {
-		for (Double dval : featureVec) {
-			ps.print(dval);
-			ps.print("\t");
+	public void printFeatures(OutputStreamWriter ps) {
+		try {
+			for (Double dval : featureVec) {
+				ps.append(Double.toString(dval));
+				ps.append("\t");
+			}
 		}
-		ps.println();
+		catch (IOException e) {
+			e.printStackTrace();
+		}		
 	}
 }

@@ -10,17 +10,18 @@
 package extract;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 
 import javax.imageio.ImageIO;
 
 public class ProcessImg {
-
-	// Control parameters
-	static int MBSize = 16; // a size of macro block
-	static int MBHalfSize = MBSize / 2; // half of macro block
-	
+	public static final String ENCODING = "UTF-8";
 	// Data
 	protected ColorRGBChannel<Double[][]> refImage;
 	
@@ -33,12 +34,20 @@ public class ProcessImg {
 		m_srcImgPath = srcImgPath;
 	}
 	
-	public boolean process(PrintStream out) {
+	public boolean process(OutputStreamWriter out) {
 		try {
 			File[] files = m_srcImgPath.listFiles();
+			if (files == null) {
+				System.err.println("No files found in directory " + m_srcImgPath);
+				return false;
+			}
+			
+			out.append(Integer.toString(FeatureMeanColor.getFeatureNumber()));
+			out.append("\n");
+			
 			for (File srcImgFile : files) {
-				out.print(srcImgFile.toString());
-				out.print("\t");
+				out.append(srcImgFile.toString());
+				out.append("\t");
 				
 				ColorRGBChannel<Double[][]> srcImage = ImgProcessing.extractColors(ImageIO.read(srcImgFile));
 				Feature encodeImage = doFeatureExtract(srcImage);
@@ -83,8 +92,8 @@ public class ProcessImg {
 
 			Feature encodeImage = doFeatureExtract(refImage);
 			LogMsg("Done Feature Extraction.");
-			
-			encodeImage.printFeatures(System.out);
+						 
+			encodeImage.printFeatures(new OutputStreamWriter(System.out));
 		}
 		catch(IOException ex) {
 			System.err.println("Failed to load the reference image. " +
@@ -95,7 +104,7 @@ public class ProcessImg {
 	}
 	
 	public static void printHelp() {
-		System.out.println("Usage: " + "java ProcessImg.class" + " [-t] [-h] <path>");
+		System.out.println("Usage: " + "java ProcessImg.class" + " [-t] [-h] [-o<output>] <path>");
 		System.out.println();
 		System.out.println("  -t\tTest");
 		System.out.println("  -h\tHelp");
@@ -114,7 +123,9 @@ public class ProcessImg {
 			else if (arg.equalsIgnoreCase("-?") || arg.equalsIgnoreCase("-h") ||
 					arg.equalsIgnoreCase("--help"))
 				showHelp = true;
-			else {
+			else if (arg.substring(0, 2).equalsIgnoreCase("-o")) {
+				outPath = arg.substring(2);
+			} else {
 				if (imgPath == null)
 					imgPath = arg;
 			}
@@ -134,8 +145,30 @@ public class ProcessImg {
 			printHelp();
 			return;
 		}
-		
+						
 		ProcessImg proc = new ProcessImg(new File(imgPath));
-		proc.process(System.out);
+		OutputStreamWriter writer;
+		
+		if (outPath != null) {
+			try {
+				writer = new OutputStreamWriter(new FileOutputStream(outPath),
+						ENCODING);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+				return;
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+				return;
+			}
+		} else {
+			writer = new OutputStreamWriter(System.out);
+		}
+		
+		proc.process(writer);
+		try {
+			writer.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

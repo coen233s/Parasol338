@@ -24,16 +24,16 @@ public class FeatureMeanColor extends Feature {
 		int blockCx = imgCx / m_cx;
 		int blockCy = imgCy / m_cy;
 		
-		for (int i = 0; i < m_cx - 1; i++) {
-		    for (int j = 0; j < m_cy - 1; j++) {
+		for (int i = 0; i < m_cx; i++) {
+		    for (int j = 0; j < m_cy; j++) {
 				int startBlockCx = blockCx * i;
 				int startBlockCy = blockCy * j;
 				
 				double rsum = 0, gsum = 0, bsum = 0;
 				int nSample = 0;
 				
-				for (int k = 0; k < m_cx; k++)
-					for (int l = 0; l < m_cy; l++) {
+				for (int k = 0; k < blockCx; k++)
+					for (int l = 0; l < blockCy; l++) {
 						rsum += m_image.at(0)[startBlockCx + k][startBlockCy + l];
 						gsum += m_image.at(1)[startBlockCx + k][startBlockCy + l];
 						bsum += m_image.at(2)[startBlockCx + k][startBlockCy + l];

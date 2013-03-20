@@ -38,6 +38,9 @@ public class Cluster {
 	protected int m_nSample;
 	protected int m_nClusters;
 
+	protected double m_dataMin;
+	protected double m_dataMax;
+	
 	public static final int NUM_CENTROIDS = 5;	
 
 	public static void printHelp() {
@@ -86,6 +89,9 @@ public class Cluster {
 				return false;
 			}
 
+			m_dataMin = Double.MAX_VALUE;
+			m_dataMax = Double.MIN_VALUE;
+			
 			for (;;) {
 				line = fin.readLine();
 				if (line == null)
@@ -101,8 +107,12 @@ public class Cluster {
 				}
 				m_fileNames.add(tokens[0]);	
 				DataVec vec = new DataVec();
-				for (int i = 1; i < tokens.length; i++)
-					vec.add(Double.parseDouble(tokens[i]));
+				for (int i = 1; i < tokens.length; i++) {
+				    double data = Double.parseDouble(tokens[i]);
+					vec.add(data);
+				    m_dataMin = Math.min(m_dataMin, data);
+				    m_dataMax = Math.max(m_dataMax, data);
+				}
 				m_feature.add(vec);
 			}
 		} catch (UnsupportedEncodingException e) {
@@ -118,11 +128,13 @@ public class Cluster {
 		return true;
 	}
 
-	public DataVec[] CreateRandomCentroids(int n) {
+	public DataVec[] CreateRandomCentroids(int n, double dataMin, double dataMax) {
 		DataVec[] centroids = new DataVec[n];
 		Random rnd = new Random();
 		for (int k=0; k<n; k++) {
-			centroids[k] = new DataVec(m_nDimensions);
+			centroids[k] = new DataVec();
+			for (int l = 0; l < m_nDimensions; l++)
+			    centroids[k].add(rnd.nextDouble() * (dataMax - dataMin) - dataMin); 
 		}
 		return centroids;
 	}
@@ -186,9 +198,9 @@ public class Cluster {
 		}
 	}	
 
-	public boolean cluster(PrintStream out, int iterLim) {
+	public boolean cluster(PrintStream out, int iterLim, double dataMin, double dataMax) {
 		Integer[] groups = new Integer[m_nSample];
-		DataVec[] centroids = CreateRandomCentroids(m_nClusters);
+		DataVec[] centroids = CreateRandomCentroids(m_nClusters, dataMin, dataMax);
 
 		for (int i = 0; i < groups.length; i++)
 			groups[i] = 0;
@@ -209,10 +221,6 @@ public class Cluster {
 		
 		return true;
 	}
-
-	public void printLabels() {
-		
-	}
 	
 	public boolean process(PrintStream out, int nClusters) {
 		m_nClusters = nClusters;
@@ -221,7 +229,7 @@ public class Cluster {
 		if (!res)
 			return false;
 
-		res = cluster(out, ITERATIONS);		
+		res = cluster(out, ITERATIONS, m_dataMin, m_dataMax);
 		if (!res)
 			return false;
 		

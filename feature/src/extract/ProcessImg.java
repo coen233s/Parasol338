@@ -53,6 +53,7 @@ public class ProcessImg {
 				Feature encodeImage = doFeatureExtract(srcImage);
 				
 				encodeImage.printFeatures(out);
+				out.append("\n");
 			}
 		}
 		catch(IOException ex) {
@@ -94,6 +95,7 @@ public class ProcessImg {
 			LogMsg("Done Feature Extraction.");
 						 
 			encodeImage.printFeatures(new OutputStreamWriter(System.out));
+			System.out.println();
 		}
 		catch(IOException ex) {
 			System.err.println("Failed to load the reference image. " +

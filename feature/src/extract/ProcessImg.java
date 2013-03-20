@@ -11,10 +11,9 @@ package extract;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 
 import javax.imageio.ImageIO;
-
-import quicktime.util.EncodedImage;
 
 public class ProcessImg {
 
@@ -28,24 +27,32 @@ public class ProcessImg {
 	// Debugging
 	static boolean enableLog = true;
 
+	protected File m_srcImgPath;
+	
 	public ProcessImg(File srcImgPath) {
+		m_srcImgPath = srcImgPath;
+	}
+	
+	public boolean process(PrintStream out) {
 		try {
-			File[] files = srcImgPath.listFiles();
+			File[] files = m_srcImgPath.listFiles();
 			for (File srcImgFile : files) {
-				LogMsg(String.format("Processing %s....",srcImgFile.toString()));
+				out.print(srcImgFile.toString());
+				out.print("\t");
 				
 				ColorRGBChannel<Double[][]> srcImage = ImgProcessing.extractColors(ImageIO.read(srcImgFile));
 				Feature encodeImage = doFeatureExtract(srcImage);
 				
-				LogMsg(String.format("Feature extraction %s. Done.",srcImgFile.toString()));
-				
-				encodeImage.printFeatures(System.out);
+				encodeImage.printFeatures(out);
 			}
 		}
 		catch(IOException ex) {
 			System.err.println("Failed to load the reference image. " +
 					ex.getMessage());
+			return false;
 		}
+		
+		return true;
 	}
 	
 	static Feature doFeatureExtract(ColorRGBChannel<Double[][]> srcImage)
@@ -87,7 +94,48 @@ public class ProcessImg {
 		System.out.print("Done.");
 	}
 	
+	public static void printHelp() {
+		System.out.println("Usage: " + "java ProcessImg.class" + " [-t] [-h] <path>");
+		System.out.println();
+		System.out.println("  -t\tTest");
+		System.out.println("  -h\tHelp");
+	}
+	
 	public static void main(String[] args) {
-		selfTest();
+		boolean isTest = false;
+		boolean showHelp = false;
+		
+		String imgPath = null;
+		String outPath = null;
+		
+		for (String arg : args) {
+			if (arg.equalsIgnoreCase("-t"))
+				isTest = true;
+			else if (arg.equalsIgnoreCase("-?") || arg.equalsIgnoreCase("-h") ||
+					arg.equalsIgnoreCase("--help"))
+				showHelp = true;
+			else {
+				if (imgPath == null)
+					imgPath = arg;
+			}
+		}
+		
+		if (showHelp) {
+			printHelp();
+			return;
+		}
+		
+		if (isTest) {
+			selfTest();
+			return;
+		}
+		
+		if (imgPath == null) {
+			printHelp();
+			return;
+		}
+		
+		ProcessImg proc = new ProcessImg(new File(imgPath));
+		proc.process(System.out);
 	}
 }

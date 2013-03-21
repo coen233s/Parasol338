@@ -24,14 +24,23 @@ import java.lang.*;
 * an image.
 */
 
-public class JpegEncoder extends Frame
+/*
+ * Based on JPEG encoder, the following features are added:
+ * 
+ * 1) The concept of macroblocks (16x16, 32x32 and 64x64). Some of these blocks
+ *    are extracted 
+ */
+
+public class JpegArchiveEncoder extends Frame
 {
     Thread runner;
     BufferedOutputStream outStream;
     Image image;
     JpegInfo JpegObj;
     Huffman Huf;
-    DCT dct;
+    DCT dct;    
+    BlockAnalyzer analyze;
+    
     int imageHeight, imageWidth;
     int Quality;
     int code;
@@ -46,7 +55,7 @@ public class JpegEncoder extends Frame
          53, 60, 61, 54, 47, 55, 62, 63,
         };
 
-    public JpegEncoder(Image image, int quality, OutputStream out)
+    public JpegArchiveEncoder(Image image, int quality, OutputStream out)
     {
                 MediaTracker tracker = new MediaTracker(this);
                 tracker.addImage(image, 0);
@@ -74,6 +83,7 @@ public class JpegEncoder extends Frame
         outStream = new BufferedOutputStream(out);
         dct = new DCT(Quality);
         Huf=new Huffman(imageWidth,imageHeight);
+        analyze = new BlockAnalyzer();
     }
 
     public void setQuality(int quality) {
@@ -151,6 +161,10 @@ public class JpegEncoder extends Frame
 // results in poor right and bottom borders.
 //                        if ((!JpegObj.lastColumnIsDummy[comp] || c < Width - 1) && (!JpegObj.lastRowIsDummy[comp] || r < Height - 1)) {
                            dctArray2 = dct.forwardDCT(dctArray1);
+                           
+                           // Danke: Add analyzer here
+                           analyze.add(comp, dctArray2);
+                           
                            dctArray3 = dct.quantizeBlock(dctArray2, JpegObj.QtableNumber[comp]);
 //                        }
 //                        else {

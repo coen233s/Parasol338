@@ -39,7 +39,7 @@ public class JpegArchiveEncoder extends Frame
     JpegInfo JpegObj;
     Huffman Huf;
     DCT dct;    
-    BlockAnalyzer analyze;
+    BlockAnalyzer analyzer;
     
     int imageHeight, imageWidth;
     int Quality;
@@ -55,7 +55,7 @@ public class JpegArchiveEncoder extends Frame
          53, 60, 61, 54, 47, 55, 62, 63,
         };
 
-    public JpegArchiveEncoder(Image image, int quality, OutputStream out)
+    public JpegArchiveEncoder(Image image, int quality, OutputStream out, BlockAnalyzer analyze)
     {
                 MediaTracker tracker = new MediaTracker(this);
                 tracker.addImage(image, 0);
@@ -83,7 +83,7 @@ public class JpegArchiveEncoder extends Frame
         outStream = new BufferedOutputStream(out);
         dct = new DCT(Quality);
         Huf=new Huffman(imageWidth,imageHeight);
-        analyze = new BlockAnalyzer();
+        this.analyzer = analyze;
     }
 
     public void setQuality(int quality) {
@@ -95,9 +95,13 @@ public class JpegArchiveEncoder extends Frame
     }
 
     public void Compress() {
+        analyzer.startImage();
+        
         WriteHeaders(outStream);
         WriteCompressedData(outStream);
         WriteEOI(outStream);
+        
+        analyzer.stopImage();
         try {
                 outStream.flush();
         } catch (IOException e) {
@@ -163,7 +167,7 @@ public class JpegArchiveEncoder extends Frame
                            dctArray2 = dct.forwardDCT(dctArray1);
                            
                            // Danke: Add analyzer here
-                           analyze.add(comp, dctArray2);
+                           analyzer.add(comp, dctArray2);
                            
                            dctArray3 = dct.quantizeBlock(dctArray2, JpegObj.QtableNumber[comp]);
 //                        }

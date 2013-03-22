@@ -22,7 +22,8 @@ public class SingleEncode {
 		System.out.println("Input file format: JPEG, BMP, GIF, PNG, etc.");		
 	}
 	
-	public static void jpegEncode(String srcFile, int quality, String outFile) {
+	public static void jpegEncode(boolean archive, String srcFile, int quality, String outFile,
+	        String blockPath) {
 		File file = new File(srcFile);
 		BufferedImage img;
 		try {
@@ -40,15 +41,27 @@ public class SingleEncode {
 			return;
 		}
 		
-		JpegEncoder enc = new JpegEncoder(img, quality, out);
-		enc.Compress();
+		if (archive) {
+		    BlockAnalyzer analyze = new BlockAnalyzer();
+		    JpegArchiveEncoder enc = new JpegArchiveEncoder(img, quality, out, analyze);
+		    enc.Compress();
+		    analyze.m_blockArchive.writeLibraryToFolder(blockPath);
+		} else {		    
+            JpegEncoder enc = new JpegEncoder(img, quality, out);
+            enc.Compress();            		   
+		}
 	}
 	
-	@SuppressWarnings("deprecation")
-	static void selfTest() {
+	static void testJPEGEncode() {
 		int quality = 20;
-		jpegEncode("test_data/28.jpg", quality, "test_data/28_enc.jpg");
+		jpegEncode(false, "test_data/28.jpg", quality, "test_data/28_enc.jpg", null);
 	}
+	
+    static void testJPEGArchive() {
+        int quality = 20;
+        jpegEncode(true, "test_data/28.jpg", quality, "test_data/28_enc.jpg",
+                "test_data");
+    }	
 	
 	public static void main(String[] args) {
 		boolean isTest = false;
@@ -58,11 +71,12 @@ public class SingleEncode {
 		String outPath = null;
 		
 		int quality = 20;
+		int testId = -1;
 		
 		for (String arg : args) {
-			if (arg.equalsIgnoreCase("-t"))
-				isTest = true;
-			else if (arg.equalsIgnoreCase("-?") || arg.equalsIgnoreCase("-h") ||
+		    if (arg.substring(0, 2).equalsIgnoreCase("-t")) {
+		        testId = Integer.parseInt(arg.substring(2));				
+		    } else if (arg.equalsIgnoreCase("-?") || arg.equalsIgnoreCase("-h") ||
 					arg.equalsIgnoreCase("--help"))
 				showHelp = true;
 			else if (arg.substring(0, 2).equalsIgnoreCase("-o")) {
@@ -80,8 +94,12 @@ public class SingleEncode {
 			return;
 		}
 
-		if (isTest) {
-			selfTest();
+		switch (testId) {
+		case 1: 		    
+			testJPEGEncode();
+			return;
+		case 2:
+		    testJPEGArchive();
 			return;
 		}
 
@@ -92,6 +110,6 @@ public class SingleEncode {
 		
 		System.err.println("Compressing image " + dataPath + " to " +
 				outPath + " with quality " + quality);
-		jpegEncode(dataPath, quality, outPath);
+		jpegEncode(false, dataPath, quality, outPath, null);
 	}
 }

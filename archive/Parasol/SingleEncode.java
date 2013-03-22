@@ -41,12 +41,11 @@ public class SingleEncode {
 			return;
 		}
 		
-		if (archive) {
-		    BlockAnalyzer analyze = new BlockAnalyzer();
-		    JpegArchiveEncoder enc = new JpegArchiveEncoder(img, quality, out, analyze);
+		if (archive) {		    
+		    JpegArchiveEncoder enc = new JpegArchiveEncoder(img, quality, out);
 		    enc.Compress();
-		    analyze.m_blockArchive.writeLibraryToFolder(blockPath);
-		} else {		    
+		    enc.analyzer.m_blockArchive.writeLibraryToFolder(blockPath);
+		} else {    
             JpegEncoder enc = new JpegEncoder(img, quality, out);
             enc.Compress();            		   
 		}

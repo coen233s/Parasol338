@@ -44,10 +44,12 @@ public class Cluster {
 	}	
 
 	public Cluster(List<DataVec> feature, double min, double max) {
+		assert(feature.size() != 0);
 		m_feature = feature;
 		m_nSample = feature.size();
 		m_dataMin = min;
 		m_dataMax = max;
+		m_nDimensions = feature.get(0).size();
 	}
 
 	protected boolean readData() {
@@ -184,7 +186,7 @@ public class Cluster {
 	public Triple<Integer[], Integer[], DataVec[]> cluster(PrintStream out, int clusters,
 	        int iterLim) {
 	    m_groups = new Integer[m_nSample];
-	    DataVec[] centroids = CreateRandomCentroids(m_nClusters, m_dataMin, m_dataMax);
+	    DataVec[] centroids = CreateRandomCentroids(clusters, m_dataMin, m_dataMax);
 
 	    m_nClusters = clusters;
 
@@ -198,11 +200,9 @@ public class Cluster {
 	        System.err.println("iteration: " + i);
 	    }
 
-	    // print labels
-	    Iterator<String> itName = m_fileNames.iterator();
-	    for (int i = 0; i < m_nSample; i++) {
-	        String dataName = itName.next();
-	        out.println(dataName + "\t" + m_groups[i]);
+	    // print labels	    
+	    for (int i = 0; i < m_nSample; i++) {	        
+	        out.println("" + i + " " + m_groups[i]);
 	    }
 
 	    Triple<Integer[], Integer[], DataVec[]> res = new Triple<Integer[], Integer[], 

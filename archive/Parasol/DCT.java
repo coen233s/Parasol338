@@ -30,7 +30,7 @@ class DCT
     */
    public int quantum_chrominance[]     = new int[N*N];
    public double DivisorsChrominance[] = new double[N*N];
-
+   
    /**
     * Constructs a new DCT object. Initializes the cosine transform matrix
     * these are used when computing the DCT and it's inverse. This also
@@ -43,9 +43,8 @@ class DCT
     */
    public DCT(int QUALITY)
    {
-       initMatrix(QUALITY);
+	   initMatrix(QUALITY);
    }
-                       
 
    /*
     * This method sets up the quantization matrix for luminance and
@@ -293,7 +292,6 @@ class DCT
        return output;
    }
                                                                
-
    /*
     * This method preforms a DCT on a block of image data using the AAN
     * method as implemented in the IJG Jpeg-6a library.
@@ -399,6 +397,141 @@ class DCT
        return output;
    }
 
+   public double[][] inverseDCT(double input[][])
+   {
+	   double output[][] = new double[N][N];
+	   double tmp0, tmp1, tmp2, tmp3, tmp4, tmp5, tmp6, tmp7;
+	   double tmp10, tmp11, tmp12, tmp13;
+	   double z5, z10, z11, z12, z13;
+	   int i, j;
+
+	   /* Pass 1: process columns from input, store into work array. */
+
+	   for (i = 0; i < 8; i++) {
+		   /* Due to quantization, we will usually find that many of the input
+		    * coefficients are zero, especially the AC terms.  We can exploit this
+		    * by short-circuiting the IDCT calculation for any column in which all
+		    * the AC terms are zero.  In that case each output is equal to the
+		    * DC coefficient (with scale factor as needed).
+		    * With typical images and quantization tables, half or more of the
+		    * column DCT calculations can be simplified this way.
+		    */
+
+		   /* Even part */
+
+		   tmp0 = input[0][0];		   		   
+		   tmp1 = input[0][2];
+		   tmp2 = input[0][4];
+		   tmp3 = input[0][6];
+
+		   tmp10 = tmp0 + tmp2;	/* phase 3 */
+		   tmp11 = tmp0 - tmp2;
+
+		   tmp13 = tmp1 + tmp3;	/* phases 5-3 */
+		   tmp12 = (tmp1 - tmp3) * 1.414213562 - tmp13; /* 2*c4 */
+
+		   tmp0 = tmp10 + tmp13;	/* phase 2 */
+		   tmp3 = tmp10 - tmp13;
+		   tmp1 = tmp11 + tmp12;
+		   tmp2 = tmp11 - tmp12;
+
+		   /* Odd part */
+		   tmp4 = input[1][0];
+		   tmp5 = input[3][0];
+		   tmp6 = input[5][0];
+		   tmp7 = input[7][0];		   
+
+		   z13 = tmp6 + tmp5;		/* phase 6 */
+		   z10 = tmp6 - tmp5;
+		   z11 = tmp4 + tmp7;
+		   z12 = tmp4 - tmp7;
+
+		   tmp7 = z11 + z13;		/* phase 5 */
+		   tmp11 = (z11 - z13) * (1.414213562); /* 2*c4 */
+
+		   z5 = (z10 + z12) * (1.847759065); /* 2*c2 */
+		   tmp10 = z5 - z12 * (1.082392200); /* 2*(c2-c6) */
+		   tmp12 = z5 - z10 * (2.613125930); /* 2*(c2+c6) */
+
+		   tmp6 = tmp12 - tmp7;	/* phase 2 */
+		   tmp5 = tmp11 - tmp6;
+		   tmp4 = tmp10 - tmp5;
+
+		   input[i][0] = tmp0 + tmp7;
+		   input[i][7] = tmp0 - tmp7;
+		   input[i][1] = tmp1 + tmp6;
+		   input[i][6] = tmp1 - tmp6;
+		   input[i][2] = tmp2 + tmp5;
+		   input[i][5] = tmp2 - tmp5;
+		   input[i][3] = tmp3 + tmp4;
+		   input[i][4] = tmp3 - tmp4;
+	   }
+
+	   /* Pass 2: process rows from work array, store into output array. */
+	   
+	   for (i = 0; i < 8; i++) {
+		   /* Rows of zeroes can be exploited in the same way as we did with columns.
+		    * However, the column calculation has created many nonzero AC terms, so
+		    * the simplification applies less often (typically 5% to 10% of the time).
+		    * And testing floats for zero is relatively expensive, so we don't bother.
+		    */
+
+		   /* Even part */
+
+		   /* Apply signed->unsigned and prepare float->int conversion */
+		   z5 = input[i][0] + (255 + .5);
+		   tmp10 = z5 + input[i][4];
+		   tmp11 = z5 - input[i][4];
+
+		   tmp13 = input[i][2] + input[i][6];
+		   tmp12 = (input[i][2] - input[i][6]) * (1.414213562) - tmp13;
+
+		   tmp0 = tmp10 + tmp13;
+		   tmp3 = tmp10 - tmp13;
+		   tmp1 = tmp11 + tmp12;
+		   tmp2 = tmp11 - tmp12;
+
+		   /* Odd part */
+
+		   z13 = input[i][5] + input[i][3];
+		   z10 = input[i][5] - input[i][3];
+		   z11 = input[i][1] + input[i][7];
+		   z12 = input[i][1] - input[i][7];
+
+		   tmp7 = z11 + z13;
+		   tmp11 = (z11 - z13) * (1.414213562);
+
+		   z5 = (z10 + z12) * (1.847759065); /* 2*c2 */
+		   tmp10 = z5 - z12 * (1.082392200); /* 2*(c2-c6) */
+		   tmp12 = z5 - z10 * (2.613125930); /* 2*(c2+c6) */
+
+		   tmp6 = tmp12 - tmp7;
+		   tmp5 = tmp11 - tmp6;
+		   tmp4 = tmp10 - tmp5;
+
+		   /* Final output stage: float->int conversion and range-limit */
+
+		   // #define IDCT_range_limit(cinfo)  ((cinfo)->sample_range_limit + CENTERJSAMPLE)
+		   
+		   output[i][0] = (tmp0 + tmp7);
+		   output[i][7] = (tmp0 - tmp7);
+		   output[i][1] = (tmp1 + tmp6);
+		   output[i][6] = (tmp1 - tmp6);
+		   output[i][2] = (tmp2 + tmp5);
+		   output[i][5] = (tmp2 - tmp5);
+		   output[i][3] = (tmp3 + tmp4);
+		   output[i][4] = (tmp3 - tmp4);
+	   }
+	   
+	   for (i = 0; i < 8; i++) {
+		   for(j = 0; j < 8; j++) {
+			   output[i][j] = ((double)output[i][j] + (double)128.0);
+		   }
+	   }
+	   
+	   return output;
+   }
+   
    /*
    * This method quantitizes data and rounds it to the nearest integer.
    */

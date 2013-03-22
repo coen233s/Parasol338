@@ -18,9 +18,12 @@ import javax.imageio.ImageIO;
  * 
  */
 public class BlockArchive {
+	DCT m_dct;
     Vector<Vector<double[][]>> m_blockLibrary;
-    public BlockArchive() {
+    
+    public BlockArchive(DCT dct) {
         m_blockLibrary = new Vector<Vector<double[][]>>();
+        m_dct = dct;
     }
     
     public void add(Vector<double[][]> block) {
@@ -45,7 +48,7 @@ public class BlockArchive {
         return sumSq;
     }    
     
-    public static Color[][] fromYCbCy2RGB(Vector<Double[][]> srcImg) {
+    public Color[][] fromYCbCy2RGB(Vector<double[][]> srcImg) {
         // YCbCr -> RGB matrix
         final double b12 = Double.parseDouble("-9.2674E-4");  
         final double b13 = Double.parseDouble("1.4017");  
@@ -72,7 +75,7 @@ public class BlockArchive {
         return dstImg;
     }
     
-    public static void updateBufferedImage(BufferedImage src, Color[][] colors) {
+    public void updateBufferedImage(BufferedImage src, Color[][] colors) {
 
         assert(src.getWidth() == colors.length);
         assert(src.getHeight() == colors[0].length);
@@ -89,6 +92,22 @@ public class BlockArchive {
 
     public void outputImage(int idx, String imageName) {
         BufferedImage outImg = new BufferedImage(8, 8, BufferedImage.TYPE_INT_RGB);
+        Vector<double[][]> v = m_blockLibrary.get(idx);
+        
+        double[][] y = v.get(0);
+        double[][] cb = v.get(1);
+        double[][] cr = v.get(2);       
+        
+        m_dct.inverseDCT(y);
+        m_dct.inverseDCT(cb);
+        m_dct.inverseDCT(cr);
+        
+        Vector<double[][]> yuv = new Vector<double[][]>();
+        yuv.add(y);
+        yuv.add(cb);
+        yuv.add(cr);
+        
+        updateBufferedImage(outImg, fromYCbCy2RGB(yuv));
         
         try {
             ImageIO.write(outImg, "png",

@@ -14,8 +14,21 @@ public class BlockAnalyzer {
     
 	public static final int BLOCK_SZ = 8;
 	
-	public BlockAnalyzer() {
-	    m_blockArchive = new BlockArchive();
+	public static int[] jpegNaturalOrder = {
+        0,  1,  8, 16,  9,  2,  3, 10,
+       17, 24, 32, 25, 18, 11,  4,  5,
+       12, 19, 26, 33, 40, 48, 41, 34,
+       27, 20, 13,  6,  7, 14, 21, 28,
+       35, 42, 49, 56, 57, 50, 43, 36,
+       29, 22, 15, 23, 30, 37, 44, 51,
+       58, 59, 52, 45, 38, 31, 39, 46,
+       53, 60, 61, 54, 47, 55, 62, 63,
+      };	
+	
+	public static int useDctFeature = 10;	
+	
+	public BlockAnalyzer(DCT dct) {
+	    m_blockArchive = new BlockArchive(dct);
 	    m_feature = new LinkedList<DataVec>();
 	}
 	
@@ -36,25 +49,25 @@ public class BlockAnalyzer {
 	}
 	
 	public Vector<double[][]> dataVecToBlock(int nComps, DataVec vec) {
-	    int blockSize = (int)Math.sqrt(vec.size() / nComps);
-	    
 	    Vector<double[][]> block = new Vector<double[][]>();
 	    
 	    for (int i = 0; i < nComps; i++) {
-	        block.add(new double[blockSize][blockSize]);
+	        block.add(new double[BLOCK_SZ][BLOCK_SZ]);
 	    }
 	    
 	    Iterator<Double> dataIt = vec.iterator();
 	    
-	    for (int i = 0; i < blockSize; i++)
-	        for (int j = 0; j < blockSize; j++) {
-	                block.get(0)[i][j] = dataIt.next();
-	                block.get(1)[i][j] = dataIt.next();
-	                block.get(2)[i][j] = dataIt.next();
-	        }
-	    
+	    // Zigzag scan
+		for (int z = 0; z < useDctFeature; z++) {
+			int j = jpegNaturalOrder[z] / BLOCK_SZ;
+			int k = jpegNaturalOrder[z] % BLOCK_SZ;
+			block.get(0)[j][k] = dataIt.next();
+			block.get(1)[j][k] = dataIt.next();
+			block.get(2)[j][k] = dataIt.next();
+		}
+
         return block;
-	}
+	}	
 	
 	// Called after pushing all blocks from an image
 	public void stopImage() {
@@ -77,11 +90,13 @@ public class BlockAnalyzer {
 			assert(Cb.length == Y.length);
 			assert(Cr.length == Y.length);
 			
-			for (int j = 0; j < Y.length; j++)
-			    for (int k = 0; k < Y[0].length; k++) {
-			        vec.add(Y[j][k]);
-			        vec.add(Cb[j][k]);
-			        vec.add(Cr[j][k]);
+			// Zigzag scan
+			for (int z = 0; z < useDctFeature; z++) {
+				int j = jpegNaturalOrder[z] / 8;
+				int k = jpegNaturalOrder[z] % 8;
+				vec.add(Y[j][k]);
+				vec.add(Cb[j][k]);
+				vec.add(Cr[j][k]);
 			}
 			
 			m_feature.add(vec);
@@ -90,15 +105,19 @@ public class BlockAnalyzer {
 		// Number of blocks
 		int nBlocks = m_feature.size();
 
-		// Cluster
+		// Cluster parameters
+		final int paramClusterNum = 40; // if members > this number, then add to dictionary
+		final int paramCountThres = 10; // if members > this number, then add to dictionary
+
+		// Cluster		
 		Cluster cluster = new Cluster(m_feature, 0, 1); // check min and max
-		Triple<Integer[], Integer[], DataVec[]> res = cluster.cluster(System.out, nBlocks / 10, 30);
+		Triple<Integer[], Integer[], DataVec[]> res = cluster.cluster(System.out, 
+				paramClusterNum, 20);
 		Integer[] groups = res.first;
 		Integer[] memberCount = res.second;
 		DataVec[] centroids = res.third;
 		
 		// Feature select
-		final int paramCountThres = 10; // if members > this number, then add to dictionary
 		for (int i = 0; i < memberCount.length; i++) {
 		    if (memberCount[i] >= paramCountThres) {
 		        Vector<double[][]> block = dataVecToBlock(nComps, centroids[i]);

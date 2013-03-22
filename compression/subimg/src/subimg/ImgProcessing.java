@@ -74,7 +74,8 @@ public class ImgProcessing {
 			for (int y=0; y<height; y++) {
 				int r = (int) Math.round(srcImg.y[x][y] + srcImg.cb[x][y] * b12 + srcImg.cr[x][y] * b13);
 				int g = (int) Math.round(srcImg.y[x][y] + srcImg.cb[x][y] * b22 + srcImg.cr[x][y] * b23);
-				int b = (int) Math.round(srcImg.y[x][y] + srcImg.cb[x][y] * b32 + srcImg.cr[x][y] * b33);
+				int b = (int) Math.round(srcImg.y[x][y] + srcImg.cb[x][y] * b32 + srcImg.cr[x][y] * b33);				
+				
 				dstImg[x][y] = new Color(r,g,b);
 			}
 		}

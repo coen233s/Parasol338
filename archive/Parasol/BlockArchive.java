@@ -64,11 +64,16 @@ public class BlockArchive {
         for (int x=0; x<width; x++) {
             for (int y=0; y<height; y++) {
                 int r = (int) Math.round(srcImg.get(0)[x][y] + 
-                        srcImg.get(1)[x][y] * b12 + srcImg.get(1)[x][y] * b13);
+                        srcImg.get(1)[x][y] * b12 + srcImg.get(2)[x][y] * b13);
                 int g = (int) Math.round(srcImg.get(0)[x][y] +
                         srcImg.get(1)[x][y] * b22 + srcImg.get(2)[x][y] * b23);
                 int b = (int) Math.round(srcImg.get(0)[x][y] +
                         srcImg.get(1)[x][y] * b32 + srcImg.get(2)[x][y] * b33);
+                
+                r &= 0xFF;
+                g &= 0xFF;
+                b &= 0xFF;
+                
                 dstImg[x][y] = new Color(r,g,b);
             }
         }

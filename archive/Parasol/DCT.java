@@ -532,13 +532,7 @@ class DCT
 		   output[i][5] = 0xFF &(((int)(tmp2 - tmp5))>>3);
 		   output[i][3] = 0xFF &(((int)(tmp3 + tmp4))>>3);
 		   output[i][4] = 0xFF &(((int)(tmp3 - tmp4))>>3);
-	   }
-	   
-	   for (i = 0; i < 8; i++) {
-		   for(j = 0; j < 8; j++) {
-			   output[i][j] = ((double)output[i][j] + (double)128.0);
-		   }
-	   }
+	   }	   
 	   
 	   return output;
    }

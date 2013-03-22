@@ -98,14 +98,14 @@ public class BlockArchive {
         double[][] cb = v.get(1);
         double[][] cr = v.get(2);       
         
-        m_dct.inverseDCT(y);
-        m_dct.inverseDCT(cb);
-        m_dct.inverseDCT(cr);
+        double[][] yd = m_dct.inverseDCT(y);
+        double[][] cbd = m_dct.inverseDCT(cb);
+        double[][] crd = m_dct.inverseDCT(cr);
         
         Vector<double[][]> yuv = new Vector<double[][]>();
-        yuv.add(y);
-        yuv.add(cb);
-        yuv.add(cr);
+        yuv.add(yd);
+        yuv.add(cbd);
+        yuv.add(crd);
         
         updateBufferedImage(outImg, fromYCbCy2RGB(yuv));
         

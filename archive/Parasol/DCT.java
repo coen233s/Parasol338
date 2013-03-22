@@ -404,7 +404,7 @@ class DCT
 	   double tmp10, tmp11, tmp12, tmp13;
 	   double z5, z10, z11, z12, z13;
 	   int i, j;
-
+	   
 	   /* Pass 1: process columns from input, store into work array. */
 
 	   for (i = 0; i < 8; i++) {
@@ -416,13 +416,26 @@ class DCT
 		    * With typical images and quantization tables, half or more of the
 		    * column DCT calculations can be simplified this way.
 		    */
-
+		   if (((int)input[1][i] | (int)input[2][i] | (int)input[3][i] |
+				   (int)input[4][i] | (int)input[5][i] | (int)input[6][i] |
+				   (int)input[7][i]) == 0) 
+				   {
+					   double dcval = input[0][i];
+					   output[0][i] = dcval;
+					   output[1][i] = dcval;
+					   output[2][i] = dcval;
+					   output[3][i] = dcval;
+					   output[4][i] = dcval;
+					   output[5][i] = dcval;
+					   output[6][i] = dcval;					   
+				   }
+		   
 		   /* Even part */
 
-		   tmp0 = input[0][0];		   		   
-		   tmp1 = input[0][2];
-		   tmp2 = input[0][4];
-		   tmp3 = input[0][6];
+		   tmp0 = input[0][i];		   		   
+		   tmp1 = input[2][i];
+		   tmp2 = input[4][i];
+		   tmp3 = input[6][i];
 
 		   tmp10 = tmp0 + tmp2;	/* phase 3 */
 		   tmp11 = tmp0 - tmp2;
@@ -436,10 +449,10 @@ class DCT
 		   tmp2 = tmp11 - tmp12;
 
 		   /* Odd part */
-		   tmp4 = input[1][0];
-		   tmp5 = input[3][0];
-		   tmp6 = input[5][0];
-		   tmp7 = input[7][0];		   
+		   tmp4 = input[1][i];
+		   tmp5 = input[3][i];
+		   tmp6 = input[5][i];
+		   tmp7 = input[7][i];		   
 
 		   z13 = tmp6 + tmp5;		/* phase 6 */
 		   z10 = tmp6 - tmp5;
@@ -457,14 +470,14 @@ class DCT
 		   tmp5 = tmp11 - tmp6;
 		   tmp4 = tmp10 - tmp5;
 
-		   input[i][0] = tmp0 + tmp7;
-		   input[i][7] = tmp0 - tmp7;
-		   input[i][1] = tmp1 + tmp6;
-		   input[i][6] = tmp1 - tmp6;
-		   input[i][2] = tmp2 + tmp5;
-		   input[i][5] = tmp2 - tmp5;
-		   input[i][3] = tmp3 + tmp4;
-		   input[i][4] = tmp3 - tmp4;
+		   output[0][i] = tmp0 + tmp7;
+		   output[7][i] = tmp0 - tmp7;
+		   output[1][i] = tmp1 + tmp6;
+		   output[6][i] = tmp1 - tmp6;
+		   output[2][i] = tmp2 + tmp5;
+		   output[5][i] = tmp2 - tmp5;
+		   output[3][i] = tmp3 + tmp4;
+		   output[4][i] = tmp3 - tmp4;
 	   }
 
 	   /* Pass 2: process rows from work array, store into output array. */
@@ -477,14 +490,12 @@ class DCT
 		    */
 
 		   /* Even part */
+		   
+		   tmp10 = output[i][0] + output[i][4];
+		   tmp11 = output[i][0] - output[i][4];
 
-		   /* Apply signed->unsigned and prepare float->int conversion */
-		   z5 = input[i][0] + (255 + .5);
-		   tmp10 = z5 + input[i][4];
-		   tmp11 = z5 - input[i][4];
-
-		   tmp13 = input[i][2] + input[i][6];
-		   tmp12 = (input[i][2] - input[i][6]) * (1.414213562) - tmp13;
+		   tmp13 = output[i][2] + output[i][6];
+		   tmp12 = (output[i][2] - output[i][6]) * (1.414213562) - tmp13;
 
 		   tmp0 = tmp10 + tmp13;
 		   tmp3 = tmp10 - tmp13;
@@ -493,10 +504,10 @@ class DCT
 
 		   /* Odd part */
 
-		   z13 = input[i][5] + input[i][3];
-		   z10 = input[i][5] - input[i][3];
-		   z11 = input[i][1] + input[i][7];
-		   z12 = input[i][1] - input[i][7];
+		   z13 = output[i][5] + output[i][3];
+		   z10 = output[i][5] - output[i][3];
+		   z11 = output[i][1] + output[i][7];
+		   z12 = output[i][1] - output[i][7];
 
 		   tmp7 = z11 + z13;
 		   tmp11 = (z11 - z13) * (1.414213562);
@@ -513,14 +524,14 @@ class DCT
 
 		   // #define IDCT_range_limit(cinfo)  ((cinfo)->sample_range_limit + CENTERJSAMPLE)
 		   
-		   output[i][0] = (tmp0 + tmp7);
-		   output[i][7] = (tmp0 - tmp7);
-		   output[i][1] = (tmp1 + tmp6);
-		   output[i][6] = (tmp1 - tmp6);
-		   output[i][2] = (tmp2 + tmp5);
-		   output[i][5] = (tmp2 - tmp5);
-		   output[i][3] = (tmp3 + tmp4);
-		   output[i][4] = (tmp3 - tmp4);
+		   output[i][0] = 0xFF & (((int)(tmp0 + tmp7))>>3);
+		   output[i][7] = 0xFF &(((int)(tmp0 - tmp7))>>3);
+		   output[i][1] = 0xFF &(((int)(tmp1 + tmp6))>>3);
+		   output[i][6] = 0xFF &(((int)(tmp1 - tmp6))>>3);
+		   output[i][2] = 0xFF &(((int)(tmp2 + tmp5))>>3);
+		   output[i][5] = 0xFF &(((int)(tmp2 - tmp5))>>3);
+		   output[i][3] = 0xFF &(((int)(tmp3 + tmp4))>>3);
+		   output[i][4] = 0xFF &(((int)(tmp3 - tmp4))>>3);
 	   }
 	   
 	   for (i = 0; i < 8; i++) {

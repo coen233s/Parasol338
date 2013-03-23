@@ -35,12 +35,17 @@ public class JpegArchiveEncoder extends Frame
 {
 	Thread runner;
 	BufferedOutputStream outStream;
+	BufferedOutputStream outStreamJArc;
 	Image image;
+	Image image2;
 	JpegInfo JpegObj;
 	Huffman Huf;
 	DCT dct;    
 	BlockAnalyzer analyzer;
 
+	boolean compressJArc;
+	int refBlockCnt; // count uses of ref blocks
+	
 	int imageHeight, imageWidth;
 	int Quality;
 	int code;
@@ -55,7 +60,8 @@ public class JpegArchiveEncoder extends Frame
 		53, 60, 61, 54, 47, 55, 62, 63,
 	};
 
-	public JpegArchiveEncoder(Image image, int quality, OutputStream out)
+	public JpegArchiveEncoder(Image image, Image image2, int quality, OutputStream out,
+	        OutputStream outJArc)
 	{
 		MediaTracker tracker = new MediaTracker(this);
 		tracker.addImage(image, 0);
@@ -77,10 +83,12 @@ public class JpegArchiveEncoder extends Frame
 		  * It takes the Width, Height and RGB scans of the image. 
 		  */
 		 JpegObj = new JpegInfo(image);
-
+		 this.image2 = image2;
+		 
 		 imageHeight=JpegObj.imageHeight;
 		 imageWidth=JpegObj.imageWidth;
 		 outStream = new BufferedOutputStream(out);
+		 outStreamJArc = new BufferedOutputStream(outJArc);
 		 dct = new DCT(Quality);
 		 Huf=new Huffman(imageWidth,imageHeight);
 		 analyzer = new BlockAnalyzer(dct);
@@ -94,16 +102,58 @@ public class JpegArchiveEncoder extends Frame
 		return Quality;
 	}
 
-	public void Compress() {
-		analyzer.startImage();
+	// Scan image and extract common blocks
+	public void CompressJpeg() {
+	    compressJArc = false;
+	    
+	    analyzer.startImage();
 
-		WriteHeaders(outStream);
-		WriteCompressedData(outStream);
-		WriteEOI(outStream);
-
-		analyzer.stopImage();
+	    WriteHeaders(outStream);
+        WriteCompressedData(outStream);
+        WriteEOI(outStream);
+        
+        analyzer.stopImage();
+        
+        try {
+            outStream.flush();
+        } catch (IOException e) {
+            System.out.println("IO Error: " + e.getMessage());
+        }                
+	}
+	
+	public void CompressJArc() {
+	    JpegObj = new JpegInfo(image2);
+	    
+	    imageHeight=JpegObj.imageHeight;
+        imageWidth=JpegObj.imageWidth;	    
+	    
+        Huf=new Huffman(imageWidth,imageHeight);
+        
+	    compressJArc = true;
+	    refBlockCnt = 0;
+	    
+		WriteHeaders(outStreamJArc);
+		WriteCompressedData(outStreamJArc);
+		WriteEOI(outStreamJArc);
+		
+		// Add padding for file size
+		if (false) {
+    		byte[] pad = new byte[4];
+    		
+    		for (int i = 0; i < refBlockCnt; i++)
+                try {
+                    // pad (to count size)
+                    outStreamJArc.write(pad);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+		}
+		
+		// Pad the file
+		System.err.println("Reference blocks used: " + refBlockCnt + "\n");
+		
 		try {
-			outStream.flush();
+		    outStreamJArc.flush();
 		} catch (IOException e) {
 			System.out.println("IO Error: " + e.getMessage());
 		}
@@ -115,8 +165,12 @@ public class JpegArchiveEncoder extends Frame
 		float inputArray[][];
 		float dctArray1[][] = new float[8][8];
 		double dctArray2[][] = new double[8][8];
+		double dctArray2r[][] = null;
+		double dctArrayRef[][] = null;
 		int dctArray3[] = new int[8*8];
-
+		int BlkRefIdx;
+		double minRefCost;
+		
 		/*
 		 * This method controls the compression of the image.
 		 * Starting at the upper left of the image, it compresses 8x8 blocks
@@ -166,10 +220,30 @@ public class JpegArchiveEncoder extends Frame
 							//                        if ((!JpegObj.lastColumnIsDummy[comp] || c < Width - 1) && (!JpegObj.lastRowIsDummy[comp] || r < Height - 1)) {
 							dctArray2 = dct.forwardDCT(dctArray1);
 
-							// Danke: Add analyzer here
-							analyzer.add(comp, dctArray2);
-
-							dctArray3 = dct.quantizeBlock(dctArray2, JpegObj.QtableNumber[comp]);
+							if (compressJArc) {
+							    Triple<double[][], Integer, Double> best =
+							            analyzer.match(comp, dctArray2);
+    							dctArrayRef = best.first;
+    							BlkRefIdx = best.second;
+    							minRefCost = best.third;
+    							double orgCost = analyzer.getAbsSum(dctArray2);
+    							
+    							// 25% cut-off threshold
+    							if (minRefCost < orgCost / 4) {
+    							    // code residual
+    							    dctArray2r = analyzer.getResidual(dctArray2, dctArrayRef);
+    							    dctArray3 = dct.quantizeBlock(dctArray2r, JpegObj.QtableNumber[comp]);
+    							    refBlockCnt++;
+    							} else {
+    							    // code original
+    							    dctArray3 = dct.quantizeBlock(dctArray2, JpegObj.QtableNumber[comp]);
+    							}
+							} else {
+	                            // Danke: Add analyzer here
+	                            analyzer.add(comp, dctArray2);
+	                            dctArray3 = dct.quantizeBlock(dctArray2, JpegObj.QtableNumber[comp]);
+							}
+														
 							//                        }
 							//                        else {
 							//                           zeroArray[0] = dctArray3[0];

@@ -427,7 +427,8 @@ class DCT
 					   output[3][i] = dcval;
 					   output[4][i] = dcval;
 					   output[5][i] = dcval;
-					   output[6][i] = dcval;					   
+					   output[6][i] = dcval;
+					   output[7][i] = dcval;
 				   }
 		   
 		   /* Even part */
@@ -524,7 +525,7 @@ class DCT
 
 		   // #define IDCT_range_limit(cinfo)  ((cinfo)->sample_range_limit + CENTERJSAMPLE)
 		   
-		   output[i][0] = 0xFF & (((int)(tmp0 + tmp7))>>3);
+		   output[i][0] = 0xFF &(((int)(tmp0 + tmp7))>>3);
 		   output[i][7] = 0xFF &(((int)(tmp0 - tmp7))>>3);
 		   output[i][1] = 0xFF &(((int)(tmp1 + tmp6))>>3);
 		   output[i][6] = 0xFF &(((int)(tmp1 - tmp6))>>3);
@@ -532,7 +533,7 @@ class DCT
 		   output[i][5] = 0xFF &(((int)(tmp2 - tmp5))>>3);
 		   output[i][3] = 0xFF &(((int)(tmp3 + tmp4))>>3);
 		   output[i][4] = 0xFF &(((int)(tmp3 - tmp4))>>3);
-	   }	   
+	   }
 	   
 	   return output;
    }

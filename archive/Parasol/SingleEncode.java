@@ -22,7 +22,9 @@ public class SingleEncode {
 		System.out.println("Input file format: JPEG, BMP, GIF, PNG, etc.");		
 	}
 	
-	public static void jpegEncode(boolean archive, String srcFile, int quality, String outFile,
+	public static void jpegEncode(boolean archive, String srcFile, String srcFile2, int quality, 
+	        String outFile,
+	        String JArcFile,
 	        String blockPath) {
 		File file = new File(srcFile);
 		BufferedImage img;
@@ -32,35 +34,59 @@ public class SingleEncode {
 			e.printStackTrace();
 			return;
 		}
+
+		File file2 = new File(srcFile2);
+        BufferedImage img2;
+        try {
+            img2 = ImageIO.read(file2);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
 		
 		OutputStream out;
 		try {
-			out = new FileOutputStream(outFile);
+			out = new FileOutputStream(outFile);			
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return;
 		}
 		
-		if (archive) {		    
-		    JpegArchiveEncoder enc = new JpegArchiveEncoder(img, quality, out);
-		    enc.Compress();
-		    enc.analyzer.m_blockArchive.writeLibraryToFolder(blockPath);
-		} else {    
+		if (archive) {
+	        OutputStream outJArc;
+	        try {
+	            outJArc = new FileOutputStream(JArcFile);
+	        } catch (FileNotFoundException e) {
+	            e.printStackTrace();
+	            return;
+	        }	        
+		    
+		    JpegArchiveEncoder enc = new JpegArchiveEncoder(img, img2, quality, out,
+		            outJArc);
+		    enc.CompressJpeg();
+		    enc.analyzer.m_blockArchive.writeLibraryToFolder(blockPath);		    
+		    enc.CompressJArc();
+		} else {
             JpegEncoder enc = new JpegEncoder(img, quality, out);
-            enc.Compress();            		   
+            enc.Compress();
 		}
 	}
 	
 	static void testJPEGEncode() {
 		int quality = 20;
-		jpegEncode(false, "test_data/28.jpg", quality, "test_data/28_enc.jpg", null);
+		jpegEncode(false, "test_data/28.jpg", "test_data/28.jpg",
+		        quality, "test_data/28_enc.jpg", null, 
+		        null);
 	}
 	
     static void testJPEGArchive() {
         int quality = 20;
-        jpegEncode(true, "test_data/28.jpg", quality, "test_data/28_enc.jpg",
+        jpegEncode(true, "test_data/28.jpg", 
+                "test_data/29.jpg",
+                quality, "test_data/28_enc.jpg",
+                "test_data/28_enc.jarc",
                 "test_data");
-    }	
+    }
 	
 	public static void main(String[] args) {
 		boolean isTest = false;
@@ -94,7 +120,7 @@ public class SingleEncode {
 		}
 
 		switch (testId) {
-		case 1: 		    
+		case 1:
 			testJPEGEncode();
 			return;
 		case 2:
@@ -109,6 +135,7 @@ public class SingleEncode {
 		
 		System.err.println("Compressing image " + dataPath + " to " +
 				outPath + " with quality " + quality);
-		jpegEncode(false, dataPath, quality, outPath, null);
+		jpegEncode(false, dataPath, dataPath, quality, outPath + ".jpg",
+		        outPath, null);
 	}
 }

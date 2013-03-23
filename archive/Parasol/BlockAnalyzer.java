@@ -42,6 +42,51 @@ public class BlockAnalyzer {
 		}
 	}
 	
+    public double[][] getResidual(double[][] ma, double[][] mb) {
+        double[][] r = new double[ma.length][ma[0].length];
+        for (int i = 0; i < ma.length; i++)
+            for (int j = 0; j < ma[0].length; j++)
+                r[i][j] = (ma[i][j] - mb[i][j]);
+        return r;
+    }
+	
+    public double getAbsSum(double[][] ma) {
+        double sum = 0.0;
+        for (int i = 0; i < ma.length; i++)
+            for (int j = 0; j < ma[0].length; j++)
+                sum += Math.abs(ma[i][j]);
+        return sum;
+    }
+    
+	public double getAbsDist(double[][] ma, double[][] mb) {
+	    double sum = 0.0;
+	    for (int i = 0; i < ma.length; i++)
+            for (int j = 0; j < ma[0].length; j++)
+                sum += Math.abs(ma[i][j] - mb[i][j]);
+	    return sum;
+	}
+	
+	public Triple<double[][], Integer, Double> match(int comp, double[][] dctArray) {
+	    double[][] bestRef = null;
+	    double minDist = Double.MAX_VALUE;
+	    int idx = 0, bestIdx = -1;
+	    
+	    for (Vector<double[][]> blks : m_blockArchive.m_blockLibrary) {
+	        double[][] blk = blks.get(comp);
+	        double dist = getAbsDist(dctArray, blk);
+	        if (dist <= minDist) {
+	            minDist = dist;
+	            bestRef = blk;
+	            bestIdx = idx;
+	            if (minDist == 0)
+	                break;
+	        }
+	        idx++;
+	    }
+	    
+	    return new Triple<double[][], Integer, Double>(bestRef, bestIdx, minDist);
+	}
+	
 	// Block analysis, called by encoder after the 8x8 block is DCT-transformed
 	public void add(int comp, double[][] dctArray) {
 		assert(dctArray.length == BLOCK_SZ && dctArray[0].length == BLOCK_SZ);
@@ -67,7 +112,7 @@ public class BlockAnalyzer {
 		}
 
         return block;
-	}	
+	}
 	
 	// Called after pushing all blocks from an image
 	public void stopImage() {
@@ -109,14 +154,14 @@ public class BlockAnalyzer {
 		final int paramClusterNum = 40; // if members > this number, then add to dictionary
 		final int paramCountThres = 10; // if members > this number, then add to dictionary
 
-		// Cluster		
+		// Cluster
 		Cluster cluster = new Cluster(m_feature, 0, 1); // check min and max
 		Triple<Integer[], Integer[], DataVec[]> res = cluster.cluster(System.out, 
 				paramClusterNum, 20);
 		Integer[] groups = res.first;
 		Integer[] memberCount = res.second;
 		DataVec[] centroids = res.third;
-		
+
 		// Feature select
 		for (int i = 0; i < memberCount.length; i++) {
 		    if (memberCount[i] >= paramCountThres) {
